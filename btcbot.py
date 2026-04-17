@@ -173,4 +173,20 @@ def generate_plan(trends, formings, closes):
 # -----------------------------
 def send_telegram(trends, rsis, traps, formings, closes):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    msg = f"⏰ {timestamp}\nGiá hiện tại BTC/USDT: ~${cl
+    cascade_str, follow_msg, plan_msg = generate_plan(trends, formings, closes)
+    price_now = closes.get('1H', 0)
+    msg = (
+        f"⏰ {timestamp}\n"
+        f"Giá hiện tại BTC/USDT: ~${price_now}\n\n"
+        f"Cascade:\n{cascade_str}\n\n"
+        f"Follow:\n{follow_msg}\n\n"
+        f"{plan_msg}"
+    )
+    try:
+        resp = requests.post(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+            data={"chat_id": CHAT_ID, "text": msg}
+        )
+        print("Telegram response:", resp.json())
+    except Exception as e:
+        print("Error sending Telegram message:", e)
