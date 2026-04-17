@@ -29,7 +29,7 @@ MA_FAST = 9
 MA_SLOW = 45
 
 # -----------------------------
-# Lấy OHLCV và ghép nến
+# Lấy OHLCV
 # -----------------------------
 def fetch_ohlcv(symbol, timeframe, limit=500, retries=3):
     for attempt in range(retries):
@@ -44,8 +44,6 @@ def fetch_ohlcv(symbol, timeframe, limit=500, retries=3):
     raise Exception(f"Failed to fetch OHLCV for {timeframe} after {retries} attempts")
 
 def merge_n_day(df_d1, n):
-    if len(df_d1) < n:
-        n = len(df_d1)
     df_n = pd.DataFrame()
     df_n['open'] = df_d1['open'].iloc[::n].reset_index(drop=True)
     df_n['close'] = df_d1['close'].iloc[n-1::n].reset_index(drop=True)
