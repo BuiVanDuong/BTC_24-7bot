@@ -40,7 +40,7 @@ def fetch_ohlcv(symbol, timeframe, limit=500, retries=3):
             return df
         except Exception as e:
             print(f"Fetch error {timeframe}, attempt {attempt+1}: {e}")
-            time.sleep(2**attempt)  # backoff: 1s, 2s, 4s
+            time.sleep(2**attempt)
     raise Exception(f"Failed to fetch OHLCV for {timeframe} after {retries} attempts")
 
 def merge_n_day(df_d1, n):
@@ -174,19 +174,23 @@ def generate_plan(trends, formings, closes):
 def send_telegram(trends, rsis, traps, formings, closes):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     cascade_str, follow_msg, plan_msg = generate_plan(trends, formings, closes)
-    price_now = closes.get('1H', 0)
+    price_now = closes.get('1H',0)
     msg = (
-        f"⏰ {timestamp}\n"
-        f"Giá hiện tại BTC/USDT: ~${price_now}\n\n"
-        f"Cascade:\n{cascade_str}\n\n"
-        f"Follow:\n{follow_msg}\n\n"
-        f"{plan_msg}"
+        f"⏰ {timestamp}\nGiá BTC/USDT: ~${price_now}\n\n"
+        f"Cascade:\n{cascade_str}\n\nFollow:\n{follow_msg}\n\n{plan_msg}"
     )
     try:
         resp = requests.post(
             f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
             data={"chat_id": CHAT_ID, "text": msg}
         )
-        print("Telegram response:", resp.json())
+        print(resp.json())
     except Exception as e:
         print("Error sending Telegram message:", e)
+
+# -----------------------------
+# Main
+# -----------------------------
+if __name__ == "__main__":
+    trends, rsis, traps, formings, closes = multi_timeframe_analysis()
+    send_telegram(trends, rsis, traps, formings, closes)
