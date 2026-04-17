@@ -29,7 +29,7 @@ MA_FAST = 9
 MA_SLOW = 45
 
 # -----------------------------
-# Lấy OHLCV
+# Lấy OHLCV và ghép nến
 # -----------------------------
 def fetch_ohlcv(symbol, timeframe, limit=500, retries=3):
     for attempt in range(retries):
@@ -40,7 +40,7 @@ def fetch_ohlcv(symbol, timeframe, limit=500, retries=3):
             return df
         except Exception as e:
             print(f"Fetch error {timeframe}, attempt {attempt+1}: {e}")
-            time.sleep(2**attempt)
+            time.sleep(2**attempt)  # backoff: 1s, 2s, 4s
     raise Exception(f"Failed to fetch OHLCV for {timeframe} after {retries} attempts")
 
 def merge_n_day(df_d1, n):
@@ -79,7 +79,7 @@ def analyze_df(df):
     return trend, rsi, trap, close, ma9, ma45
 
 # -----------------------------
-# Forming state
+# Trạng thái Form Point
 # -----------------------------
 def forming_state(rsi, ma9, ma45):
     if ma9 != 0 and abs(rsi - ma9)/ma9 <= 0.01:
@@ -90,7 +90,7 @@ def forming_state(rsi, ma9, ma45):
         return None
 
 # -----------------------------
-# Multi-timeframe
+# Phân tích đa khung
 # -----------------------------
 def multi_timeframe_analysis():
     trends, rsis, traps, formings, closes = {}, {}, {}, {}, {}
@@ -120,7 +120,7 @@ def multi_timeframe_analysis():
     return trends, rsis, traps, formings, closes
 
 # -----------------------------
-# Trend arrow
+# Trend Arrow màu
 # -----------------------------
 def trend_arrow(trend):
     if trend=="Rising": return "⬆️🟢"
@@ -128,7 +128,7 @@ def trend_arrow(trend):
     else: return "➡️🟡"
 
 # -----------------------------
-# Cascade + plan
+# Cascade + Plan giao dịch
 # -----------------------------
 def generate_plan(trends, formings, closes):
     cascade_order = ['H4','H12','D1','3D','1W']
@@ -173,19 +173,4 @@ def generate_plan(trends, formings, closes):
 # -----------------------------
 def send_telegram(trends, rsis, traps, formings, closes):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    cascade_str, follow_msg, plan_msg = generate_plan(trends, formings, closes)
-    price_now = closes.get('1H',0)
-    msg = f"⏰ {timestamp}\nGiá BTC/USDT: ~${price_now}\n\nCascade:\n{cascade_str}\n\nFollow:\n{follow_msg}\n\n{plan_msg}"
-    try:
-        resp = requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-                             data={"chat_id": CHAT_ID, "text": msg})
-        print(resp.json())
-    except Exception as e:
-        print("Error sending Telegram message:", e)
-
-# -----------------------------
-# Main
-# -----------------------------
-if __name__ == "__main__":
-    trends, rsis, traps, formings, closes = multi_timeframe_analysis()
-    send_telegram(trends, rsis, traps, formings, closes)
+    msg = f"⏰ {timestamp}\nGiá hiện tại BTC/USDT: ~${cl
