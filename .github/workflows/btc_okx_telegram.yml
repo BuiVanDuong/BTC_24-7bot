@@ -1,0 +1,44 @@
+name: BTC Price Alert
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # chạy 1 tiếng/lần
+  workflow_dispatch:      # trigger thủ công nếu muốn
+
+jobs:
+  fetch_and_notify:
+    runs-on: ubuntu-latest
+    env:
+      BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+      CHAT_ID: ${{ secrets.CHAT_ID }}
+
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Get BTC price and send Telegram message
+        run: |
+          python - <<'EOF'
+          import os
+          import requests
+
+          BOT_TOKEN = os.environ['BOT_TOKEN']
+          CHAT_ID = os.environ['CHAT_ID']
+
+          # Lấy giá BTC từ OKX public API
+          okx_url = "https://www.okx.com/api/v5/market/ticker?instId=BTC-USDT"
+          resp = requests.get(okx_url).json()
+          last_price = resp['data'][0]['last']
+
+          message = f"💰 Giá BTC hiện tại: {last_price} USDT"
+
+          # Gửi Telegram
+          tg_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+          tg_resp = requests.post(tg_url, data={"chat_id": CHAT_ID, "text": message})
+          print(tg_resp.json())
+          EOF
