@@ -1,12 +1,13 @@
 name: BTC OKX Telegram Bot
 
+# Chạy theo schedule 1 tiếng/lần và cho phép trigger thủ công
 on:
   schedule:
-    - cron: '0 * * * *'  # chạy 1 tiếng/lần
-  workflow_dispatch:      # trigger thủ công
+    - cron: '0 * * * *'   # mỗi giờ, phút 0
+  workflow_dispatch:       # trigger thủ công
 
 jobs:
-  run_bot:
+  run_btcbot:
     runs-on: ubuntu-latest
     env:
       BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
@@ -16,16 +17,20 @@ jobs:
       OKX_PASSPHRASE: ${{ secrets.OKX_PASSPHRASE }}
 
     steps:
-      - name: Checkout repo
+      # 1️⃣ Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
 
+      # 2️⃣ Setup Python
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
+      # 3️⃣ Cài thư viện cần thiết
       - name: Install dependencies
         run: pip install ccxt pandas talib-binary requests
 
-      - name: Run bot
+      # 4️⃣ Chạy btcbot.py
+      - name: Run BTC Bot
         run: python btcbot.py
